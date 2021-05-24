@@ -92,8 +92,6 @@ def pttdata(boardName, page):
                     print(f"正在處理的網址：{url2}")
                     res2 = rq.get(url2, headers=my_headers) # 使用requests的get方法把網頁內容載下來(第二層)
 
-
-
                     # 轉為soup格式
                     soup2 = BeautifulSoup(res2.text, 'html.parser') # 使用 html.parser 作為解析器
 
@@ -145,24 +143,18 @@ def pttdata(boardName, page):
                     df3 = df3.append(s3, ignore_index=True) # df3 DataFrame中添加s3的數據
                     time.sleep(random.randint(0, 1)) # 休息0-1秒之間
                     # -----------------------------------------取得文章內容----------------------------------------- #
-
-
-            # 每跑5頁時儲存資料
-        if (page_number % 1 == 0) | (page_number == endPage+1):
-
-            # print('目前正在儲存 ', str(page_number), ' .tsv資料')
-            print('目前正在匯入 ', str(page_number), '頁進資料庫')
-
-                # df1.df2.df3 DataFrame合併  並匯出成TSV檔
-            dfs = [df1, df2, df3]
-            mainTextDf = pd.concat(dfs, axis=1).reset_index(drop=True)
-            mainTextDf.insert(0, 'page', page_number)
-            mainTextDf.to_csv(filename + str(startPage - endPage) + ".csv",encoding="utf-8-sig", index=False, sep='\t')
+            
+         # df1.df2.df3 DataFrame合併  並匯出成csv檔
+         dfs = [df1, df2, df3]
+         mainTextDf = pd.concat(dfs, axis=1).reset_index(drop=True)
+         mainTextDf.insert(0, 'page', page_number)
+         mainTextDf.to_csv(filename + str(startPage - endPage) + ".csv",encoding="utf-8-sig", index=False, sep=',')
+         print('目前正在儲存 ', str(page_number), ' .csv資料')
 
                 # 清空資料
-            df1 = pd.DataFrame(columns=["id", "board", "authors", "time", "url"])
-            df2 = pd.DataFrame(columns=["title"])
-            df3 = pd.DataFrame(columns=["content"])
+         df1 = pd.DataFrame(columns=["id", "board", "authors", "time", "url"])
+         df2 = pd.DataFrame(columns=["title"])
+         df3 = pd.DataFrame(columns=["content"])
 
 if __name__ == '__main__':
     pttdata(boardName, page)
