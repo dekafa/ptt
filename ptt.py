@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 def pttdata(boardName, page):
 
 
-# 儲存tsv資料夾名稱
+# 儲存csv資料夾名稱
     filename = 'ptt-' + boardName
 
 
