@@ -26,8 +26,6 @@ def pttdata(boardName, page):
     my_headers = {'cookie': 'over18=1;', # Ptt網站 18歲的認證
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36'}
 
-
-
 # 設定結束頁數
 # 目前最新網頁頁數
     url = 'https://www.ptt.cc/bbs/' + boardName + '/index.html'
@@ -84,21 +82,29 @@ def pttdata(boardName, page):
                 # print('123')
                 continue
             else:
-                a_item = item.select_one("a") # 爬取到該頁的所有連結
+                a_item = item.select_one("a") # 爬取到該頁的所有連結    
+                url2 = 'https://www.ptt.cc' + a_item.get('href')  # url2 用來爬取每一頁的所有文章連結
+                print(f"正在處理的網址：{url2}")
+                res2 = rq.get(url2, headers=my_headers) # 使用requests的get方法把網頁內容載下來(第二層)
                 
-                # if a_item  (是因為可能會有文章刪除或不存在的可能性 會得到None)
-                if a_item:
-                    url2 = 'https://www.ptt.cc' + a_item.get('href')  # url2 用來爬取每一頁的所有文章連結
-                    print(f"正在處理的網址：{url2}")
-                    res2 = rq.get(url2, headers=my_headers) # 使用requests的get方法把網頁內容載下來(第二層)
-
+                res404 = '<Response [404]>'
+            # 如果有標題有網址但為404  則給所有值為空值
+                if str(res2) == res404:
+                    s1 = pd.Series([' ', ' ', ' ', '0000-00-00 00:00:00', ' '],
+                                   index=["id", "authors", "board", "time", "url"])
+                    df1 = df1.append(s1, ignore_index=True)            
+                    s3 = pd.Series(' ',  index=["content"])
+                    df3 = df3.append(s3, ignore_index=True) 
+                    time.sleep(random.randint(3, 6))      
+                    
+                else:
                     # 轉為soup格式
                     soup2 = BeautifulSoup(res2.text, 'html.parser') # 使用 html.parser 作為解析器
 
                     # 取得 文章ID 資訊 (使用正規表達式 找出規則 並爬取到「文章ID」資訊)
                     id = re.findall(r'(\w+\.\w+\.\w+\.\w+).html', url2)[0]
 
-                    # -------------------------------------取得文章基本資訊------------------------------------- #
+                    # -------------------------------------取得文章資訊------------------------------------- #
                     main_content = soup2.select("#main-content")
                     for m in main_content:
                         infosTag = m.find_all("span", class_="article-meta-tag")
@@ -122,9 +128,9 @@ def pttdata(boardName, page):
                                     index=["id", "authors", "board", "time", "url"])
                         df1 = df1.append(s1, ignore_index=True) # df1 DataFrame中添加s1的數據
                     time.sleep(random.randint(0, 1)) # 休息0-1秒之間
-                    # -------------------------------------取得文章基本資訊------------------------------------- #
+                    # -------------------------------------取得文章資訊------------------------------------- #
 
-                    # -----------------------------------------取得文章內容----------------------------------------- #
+                    # -----------------------------------------文章內容----------------------------------------- #
                     # 先使用find() 是因為網頁中所得到的資料為一區塊
                     contents = soup2.find("div", id="main-content")
 
@@ -142,7 +148,7 @@ def pttdata(boardName, page):
                                 index=["content"])
                     df3 = df3.append(s3, ignore_index=True) # df3 DataFrame中添加s3的數據
                     time.sleep(random.randint(0, 1)) # 休息0-1秒之間
-                    # -----------------------------------------取得文章內容----------------------------------------- #
+                # -----------------------------------------文章內容----------------------------------------- #
             
          # df1.df2.df3 DataFrame合併  並匯出成csv檔
          dfs = [df1, df2, df3]
